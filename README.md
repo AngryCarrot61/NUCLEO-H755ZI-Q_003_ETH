@@ -1,7 +1,7 @@
 # NUCLEO-H755ZI-Q_003_ETH
 Nucleo-H755ZI ethernet
 
-I tried to get ethernet working on a Nucleo-H755ZI, on the M7 core.
+I tried to get ethernet working on a Nucleo-H755ZI, on the M7 core, without RTOS.
 
 For this I followed these posts:
 
