@@ -15,13 +15,15 @@ What am I missing?
 
 
 The IP address is in CM7\LWIP\App\lpwip.c
+```
    * IP_ADDRESS[0] = 192;
    * IP_ADDRESS[1] = 168;
    * IP_ADDRESS[2] = 2;
    * IP_ADDRESS[3] = 180;
-
+```
 STM32H755ZITX_RAM.ld:
 
+```
   .lwip_sec (NOLOAD) : 
   {
     . = ABSOLUTE(0x30040000);
@@ -33,16 +35,20 @@ STM32H755ZITX_RAM.ld:
     . = ABSOLUTE(0x30040200);
     *(.Rx_PoolSection) 
   } >RAM_D2
+```
 
 lwipopts.h:
 
+```
 /*----- Default Value for MEM_SIZE: 1600 ---*/
 #define MEM_SIZE 131048
 /*----- Default Value for H7 devices: 0x30044000 -----*/
 #define LWIP_RAM_HEAP_POINTER 0x30020000
+```
 
 ethernetif.c:
 
+```
 /* USER CODE BEGIN 2 */
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
 #pragma location = 0x30000400
@@ -56,9 +62,10 @@ __attribute__((section(".Rx_PoolSection"))) extern u8_t memp_memory_RX_POOL_base
 
 #endif
 /* USER CODE END 2 */
+```
 
 main.c:
-
+```
 void MPU_Config(void)
 {
   MPU_Region_InitTypeDef MPU_InitStruct = {0};
@@ -136,6 +143,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
   }
 
+```
 
 
 
