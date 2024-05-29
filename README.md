@@ -222,3 +222,18 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef* ethHandle)
   }
 }
 ```
+
+This definition has to go into 'STM32H755ZITX_FLASH.ld' and NOT into 'STM32H755ZITX_RAM.ld':
+
+```
+  .lwip_sec (NOLOAD) : {
+    . = ABSOLUTE(0x30040000);
+    *(.RxDecripSection) 
+    
+    . = ABSOLUTE(0x30040060);
+    *(.TxDecripSection)
+    
+    . = ABSOLUTE(0x30040200);
+    *(.RxArraySection) 
+  } >RAM_D2
+```
