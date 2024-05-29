@@ -96,34 +96,37 @@ static uint8_t RxAllocStatus;
 
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
 
-#pragma location=0x30000000
+#pragma location=0x30040000
 ETH_DMADescTypeDef  DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
-#pragma location=0x30000200
+#pragma location=0x30040060
 ETH_DMADescTypeDef  DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
+#pragma location=0x30040200
+uint8_t Rx_Buff[ETH_RX_DESC_CNT][ETH_RX_BUFFER_SIZE]; /* Ethernet Receive Buffers */
 
 #elif defined ( __CC_ARM )  /* MDK ARM Compiler */
 
-__attribute__((at(0x30000000))) ETH_DMADescTypeDef  DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
-__attribute__((at(0x30000200))) ETH_DMADescTypeDef  DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
+__attribute__((at(0x30040000))) ETH_DMADescTypeDef  DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
+__attribute__((at(0x30040060))) ETH_DMADescTypeDef  DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
+__attribute__((at(0x30040200))) uint8_t Rx_Buff[ETH_RX_DESC_CNT][ETH_RX_BUFFER_SIZE]; /* Ethernet Receive Buffer */
 
 #elif defined ( __GNUC__ ) /* GNU Compiler */
 
 ETH_DMADescTypeDef DMARxDscrTab[ETH_RX_DESC_CNT] __attribute__((section(".RxDecripSection"))); /* Ethernet Rx DMA Descriptors */
 ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT] __attribute__((section(".TxDecripSection")));   /* Ethernet Tx DMA Descriptors */
+uint8_t Rx_Buff[ETH_RX_DESC_CNT][ETH_RX_BUFFER_SIZE] __attribute__((section(".RxArraySection"))); /* Ethernet Receive Buffers */
 
 #endif
 
 /* USER CODE BEGIN 2 */
 #if defined ( __ICCARM__ ) /*!< IAR Compiler */
-#pragma location = 0x30000400
+#pragma location = 0x30040400
 extern u8_t memp_memory_RX_POOL_base[];
 
 #elif defined ( __CC_ARM )  /* MDK ARM Compiler */
-__attribute__((section(".Rx_PoolSection"))) extern u8_t memp_memory_RX_POOL_base[];
+__attribute__((at(0x30040400)) extern u8_t memp_memory_RX_POOL_base[];
 
 #elif defined ( __GNUC__ ) /* GNU Compiler */
 __attribute__((section(".Rx_PoolSection"))) extern u8_t memp_memory_RX_POOL_base[];
-
 #endif
 /* USER CODE END 2 */
 
@@ -183,7 +186,7 @@ static void low_level_init(struct netif *netif)
   heth.Init.MediaInterface = HAL_ETH_RMII_MODE;
   heth.Init.TxDesc = DMATxDscrTab;
   heth.Init.RxDesc = DMARxDscrTab;
-  heth.Init.RxBuffLen = 1536;
+  heth.Init.RxBuffLen = 1524;
 
   /* USER CODE BEGIN MACADDRESS */
 
@@ -301,6 +304,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
   TxConfig.pData = p;
 
   HAL_ETH_Transmit(&heth, &TxConfig, ETH_DMA_TRANSMIT_TIMEOUT);
+//  HAL_ETH_Transmit_patched(&heth, &TxConfig, ETH_DMA_TRANSMIT_TIMEOUT);
 
   return errval;
 }
@@ -319,6 +323,11 @@ static struct pbuf * low_level_input(struct netif *netif)
 
   if(RxAllocStatus == RX_ALLOC_OK)
   {
+#if !defined(DUAL_CORE) || defined(CORE_CM7)
+    /* Invalidate data cache for ETH Rx Buffers */
+    SCB_InvalidateDCache_by_Addr((uint32_t *)p->payload, p->len);
+#endif
+
     HAL_ETH_ReadData(&heth, (void **)&p);
   }
 
@@ -469,7 +478,6 @@ u32_t sys_now(void)
   * @param  ethHandle: ETH handle
   * @retval None
   */
-
 void HAL_ETH_MspInit(ETH_HandleTypeDef* ethHandle)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -527,10 +535,8 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef* ethHandle)
     HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
     /* Peripheral interrupt init */
-    HAL_NVIC_SetPriority(ETH_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(ETH_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(ETH_IRQn);
-    HAL_NVIC_SetPriority(ETH_WKUP_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(ETH_WKUP_IRQn);
   /* USER CODE BEGIN ETH_MspInit 1 */
 
   /* USER CODE END ETH_MspInit 1 */
@@ -570,8 +576,6 @@ void HAL_ETH_MspDeInit(ETH_HandleTypeDef* ethHandle)
 
     /* Peripheral interrupt Deinit*/
     HAL_NVIC_DisableIRQ(ETH_IRQn);
-
-    HAL_NVIC_DisableIRQ(ETH_WKUP_IRQn);
 
   /* USER CODE BEGIN ETH_MspDeInit 1 */
 
@@ -666,7 +670,8 @@ void ethernet_link_check_state(struct netif *netif)
 
   if(netif_is_link_up(netif) && (PHYLinkState <= LAN8742_STATUS_LINK_DOWN))
   {
-    HAL_ETH_Stop(&heth);
+//    HAL_ETH_Stop(&heth);
+    HAL_ETH_Stop_IT(&heth);
     netif_set_down(netif);
     netif_set_link_down(netif);
   }
@@ -705,8 +710,8 @@ void ethernet_link_check_state(struct netif *netif)
       MACConf.DuplexMode = duplex;
       MACConf.Speed = speed;
       HAL_ETH_SetMACConfig(&heth, &MACConf);
-      HAL_ETH_Start(&heth);
-//      HAL_ETH_Start_IT(&heth);
+//      HAL_ETH_Start(&heth);
+      HAL_ETH_Start_IT(&heth);
       netif_set_up(netif);
       netif_set_link_up(netif);
     }

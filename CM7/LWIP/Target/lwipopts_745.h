@@ -1,4 +1,4 @@
-/* USER CODE BEGIN Header */
+
 /**
   ******************************************************************************
   * File Name          : Target/lwipopts.h
@@ -7,16 +7,16 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
 
 /* Define to prevent recursive inclusion --------------------------------------*/
 #ifndef __LWIPOPTS__H__
@@ -34,13 +34,13 @@
 /* USER CODE END 0 */
 
 #ifdef __cplusplus
-extern "C" {
+ extern "C" {
 #endif
 
 /* STM32CubeMX Specific Parameters (not defined in opt.h) ---------------------*/
 /* Parameters set in STM32CubeMX LwIP Configuration GUI -*/
-/*----- WITH_RTOS disabled (Since FREERTOS is not set) -----*/
-#define WITH_RTOS 0
+/*----- WITH_RTOS enabled (Since FREERTOS is set) -----*/
+#define WITH_RTOS 1
 /*----- CHECKSUM_BY_HARDWARE enabled -----*/
 #define CHECKSUM_BY_HARDWARE 1
 /*-----------------------------------------------------------------------------*/
@@ -49,15 +49,8 @@ extern "C" {
 /* Parameters set in STM32CubeMX LwIP Configuration GUI -*/
 /*----- Default value in ETH configuration GUI in CubeMx: 1524 -----*/
 #define ETH_RX_BUFFER_SIZE 1524
-/*----- Value in opt.h for NO_SYS: 0 -----*/
-#define NO_SYS 1
-/*----- Value in opt.h for SYS_LIGHTWEIGHT_PROT: 1 -----*/
-#define SYS_LIGHTWEIGHT_PROT 0
 /*----- Value in opt.h for MEM_ALIGNMENT: 1 -----*/
 #define MEM_ALIGNMENT 4
-/*----- Default Value for MEM_SIZE: 1600 ---*/
-//#define MEM_SIZE 16384
-//#define MEM_SIZE (14 * 1024)
 /*----- Default Value for H7 devices: 0x30044000 -----*/
 #define LWIP_RAM_HEAP_POINTER 0x30044000
 /*----- Value supported for H7 devices: 1 -----*/
@@ -66,16 +59,8 @@ extern "C" {
 #define LWIP_ETHERNET 1
 /*----- Value in opt.h for LWIP_DNS_SECURE: (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT) -*/
 #define LWIP_DNS_SECURE 7
-
-/* Added */
-#define TCP_MSS                         (1500-40)
-#define TCP_SND_BUF                     (4 * TCP_MSS)
-#define TCP_WND                         (4 * TCP_MSS)
-
-
 /*----- Value in opt.h for TCP_SND_QUEUELEN: (4*TCP_SND_BUF + (TCP_MSS - 1))/TCP_MSS -----*/
 #define TCP_SND_QUEUELEN 9
-//#define TCP_SND_QUEUELEN 16 /* UPPER((4 * TCP_SND_BUF) / TCP_MSS) = 16 */
 /*----- Value in opt.h for TCP_SNDLOWAT: LWIP_MIN(LWIP_MAX(((TCP_SND_BUF)/2), (2 * TCP_MSS) + 1), (TCP_SND_BUF) - 1) -*/
 #define TCP_SNDLOWAT 1071
 /*----- Value in opt.h for TCP_SNDQUEUELOWAT: LWIP_MAX(TCP_SND_QUEUELEN)/2, 5) -*/
@@ -84,10 +69,26 @@ extern "C" {
 #define TCP_WND_UPDATE_THRESHOLD 536
 /*----- Value in opt.h for LWIP_NETIF_LINK_CALLBACK: 0 -----*/
 #define LWIP_NETIF_LINK_CALLBACK 1
-/*----- Value in opt.h for LWIP_NETCONN: 1 -----*/
-#define LWIP_NETCONN 0
-/*----- Value in opt.h for LWIP_SOCKET: 1 -----*/
-#define LWIP_SOCKET 0
+/*----- Value in opt.h for TCPIP_THREAD_STACKSIZE: 0 -----*/
+#define TCPIP_THREAD_STACKSIZE 1024
+/*----- Value in opt.h for TCPIP_THREAD_PRIO: 1 -----*/
+#define TCPIP_THREAD_PRIO 24
+/*----- Value in opt.h for TCPIP_MBOX_SIZE: 0 -----*/
+#define TCPIP_MBOX_SIZE 6
+/*----- Value in opt.h for SLIPIF_THREAD_STACKSIZE: 0 -----*/
+#define SLIPIF_THREAD_STACKSIZE 1024
+/*----- Value in opt.h for SLIPIF_THREAD_PRIO: 1 -----*/
+#define SLIPIF_THREAD_PRIO 3
+/*----- Value in opt.h for DEFAULT_THREAD_STACKSIZE: 0 -----*/
+#define DEFAULT_THREAD_STACKSIZE 1024
+/*----- Value in opt.h for DEFAULT_THREAD_PRIO: 1 -----*/
+#define DEFAULT_THREAD_PRIO 3
+/*----- Value in opt.h for DEFAULT_UDP_RECVMBOX_SIZE: 0 -----*/
+#define DEFAULT_UDP_RECVMBOX_SIZE 6
+/*----- Value in opt.h for DEFAULT_TCP_RECVMBOX_SIZE: 0 -----*/
+#define DEFAULT_TCP_RECVMBOX_SIZE 6
+/*----- Value in opt.h for DEFAULT_ACCEPTMBOX_SIZE: 0 -----*/
+#define DEFAULT_ACCEPTMBOX_SIZE 6
 /*----- Value in opt.h for RECV_BUFSIZE_DEFAULT: INT_MAX -----*/
 #define RECV_BUFSIZE_DEFAULT 2000000000
 /*----- Value in opt.h for LWIP_STATS: 1 -----*/
@@ -121,3 +122,5 @@ extern "C" {
 }
 #endif
 #endif /*__LWIPOPTS__H__ */
+
+/************************* (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -37,6 +37,8 @@
 /** @defgroup LAN8742_Private_Defines LAN8742 Private Defines
   * @{
   */
+#define LAN8742_SW_RESET_TO    ((uint32_t)500U)
+#define LAN8742_INIT_TO        ((uint32_t)2000U)
 #define LAN8742_MAX_DEV_ADDR   ((uint32_t)31U)
 /**
   * @}
@@ -119,6 +121,9 @@ int32_t  LAN8742_RegisterBusIO(lan8742_Object_t *pObj, lan8742_IOCtx_t *ioctx)
      {
        status = LAN8742_STATUS_ADDRESS_ERROR;
      }
+
+    // Jack 2019-03-25, Link did not come up after HW reset.
+    pObj->IO.WriteReg(pObj->DevAddr, LAN8742_BCR, LAN8742_BCR_AUTONEGO_EN);
 
      /* if device address is matched */
      if(status == LAN8742_STATUS_OK)
@@ -286,7 +291,7 @@ int32_t LAN8742_GetLinkState(lan8742_Object_t *pObj)
 
   if((readval & LAN8742_BCR_AUTONEGO_EN) != LAN8742_BCR_AUTONEGO_EN)
   {
-    if(((readval & LAN8742_BCR_SPEED_SELECT) == LAN8742_BCR_SPEED_SELECT) && ((readval & LAN8742_BCR_DUPLEX_MODE) == LAN8742_BCR_DUPLEX_MODE))
+    if(((readval & LAN8742_BCR_SPEED_SELECT) == LAN8742_BCR_SPEED_SELECT) && ((readval & LAN8742_BCR_DUPLEX_MODE) == LAN8742_BCR_DUPLEX_MODE)) 
     {
       return LAN8742_STATUS_100MBITS_FULLDUPLEX;
     }

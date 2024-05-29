@@ -27,6 +27,8 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal_def.h"
 
+#define ETH                 ((ETH_TypeDef *)ETH_BASE)
+
 #if defined(ETH)
 
 /** @addtogroup STM32H7xx_HAL_Driver
@@ -1761,6 +1763,7 @@ HAL_StatusTypeDef HAL_ETH_UnRegisterTxPtpCallback(ETH_HandleTypeDef *heth);
 #endif /* HAL_ETH_USE_PTP */
 
 HAL_StatusTypeDef HAL_ETH_Transmit(ETH_HandleTypeDef *heth, ETH_TxPacketConfigTypeDef *pTxConfig, uint32_t Timeout);
+HAL_StatusTypeDef HAL_ETH_Transmit_patched(ETH_HandleTypeDef *heth, ETH_TxPacketConfigTypeDef *pTxConfig, uint32_t Timeout);
 HAL_StatusTypeDef HAL_ETH_Transmit_IT(ETH_HandleTypeDef *heth, ETH_TxPacketConfigTypeDef *pTxConfig);
 
 HAL_StatusTypeDef HAL_ETH_WritePHYRegister(const ETH_HandleTypeDef *heth, uint32_t PHYAddr, uint32_t PHYReg,

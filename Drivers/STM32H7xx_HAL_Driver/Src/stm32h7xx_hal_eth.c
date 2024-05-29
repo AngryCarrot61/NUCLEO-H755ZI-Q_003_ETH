@@ -984,6 +984,79 @@ HAL_StatusTypeDef HAL_ETH_Transmit(ETH_HandleTypeDef *heth, ETH_TxPacketConfigTy
   }
 }
 
+HAL_StatusTypeDef HAL_ETH_Transmit_patched(ETH_HandleTypeDef *heth, ETH_TxPacketConfig *pTxConfig, uint32_t Timeout)
+{
+  uint32_t tickstart;
+  const ETH_DMADescTypeDef *dmatxdesc;
+ 
+  if(pTxConfig == NULL)
+  {
+    heth->ErrorCode |= HAL_ETH_ERROR_PARAM;
+    return HAL_ERROR;
+  }
+ 
+  if(heth->gState == HAL_ETH_STATE_READY)
+  {
+    /* Config DMA Tx descriptor by Tx Packet info */
+    if (ETH_Prepare_Tx_Descriptors(heth, pTxConfig, 0) != HAL_ETH_ERROR_NONE)
+    {
+      /* Set the ETH error code */
+      heth->ErrorCode |= HAL_ETH_ERROR_BUSY;
+      return HAL_ERROR;
+    }
+ 
+    /*  All the ring register updating  must be executed in a strongly-order  */
+    __DMB();
+    __DSB();
+ 
+    dmatxdesc = (ETH_DMADescTypeDef *)(&heth->TxDescList)->TxDesc[heth->TxDescList.CurTxDesc];
+ 
+    /* Incr current tx desc index */
+    INCR_TX_DESC_INDEX(heth->TxDescList.CurTxDesc, 1);
+ 
+    /* Start transmission */
+    /* issue a poll command to Tx DMA by writing address of next immediate free descriptor */
+    WRITE_REG(heth->Instance->DMACTDTPR, (uint32_t)(heth->TxDescList.TxDesc[heth->TxDescList.CurTxDesc]));
+ 
+    tickstart = HAL_GetTick();
+ 
+    /* Wait for data to be transmitted or timeout occured */
+    while((dmatxdesc->DESC3 & ETH_DMATXNDESCWBF_OWN) != (uint32_t)RESET)
+    {
+      if((heth->Instance->DMACSR & ETH_DMACSR_FBE) != (uint32_t)RESET)
+      {
+        heth->ErrorCode |= HAL_ETH_ERROR_DMA;
+        heth->DMAErrorCode = heth->Instance->DMACSR;
+        /* Set ETH HAL State to Ready */
+        heth->gState = HAL_ETH_STATE_ERROR;
+        /* Return function status */
+        return HAL_ERROR;
+      }
+ 
+      /* Check for the Timeout */
+      if(Timeout != HAL_MAX_DELAY)
+      {
+        if(((HAL_GetTick() - tickstart ) > Timeout) || (Timeout == 0U))
+        {
+          heth->ErrorCode |= HAL_ETH_ERROR_TIMEOUT;
+          heth->gState = HAL_ETH_STATE_READY;
+          return HAL_ERROR;
+        }
+      }
+    }
+ 
+    /* Set ETH HAL State to Ready */
+    heth->gState = HAL_ETH_STATE_READY;
+ 
+    /* Return function status */
+    return HAL_OK;
+  }
+  else
+  {
+    return HAL_ERROR;
+  }
+}
+
 /**
   * @brief  Sends an Ethernet Packet in interrupt mode.
   * @param  heth: pointer to a ETH_HandleTypeDef structure that contains
